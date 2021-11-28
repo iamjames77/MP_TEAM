@@ -1,39 +1,24 @@
 package com.example.mp_team;
 
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.content.ContentValues;
-import android.location.Address;
-import android.location.Geocoder;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.TextView;
-import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.NetPermission;
-import java.net.URL;
-import java.net.URLEncoder;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-
-import jxl.Sheet;
-import jxl.Workbook;
-import jxl.read.biff.BiffException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Vector;
 
 public class MainActivity extends AppCompatActivity {
-
     private TextView tv_outPut;
+    private Vector<Double> temp = new Vector<Double>();
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -41,14 +26,20 @@ public class MainActivity extends AppCompatActivity {
 
         tv_outPut = (TextView) findViewById(R.id.tv_outPut);
 
+        long now = System.currentTimeMillis();
+        Date date = new Date(now);
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
+        SimpleDateFormat sdfh = new SimpleDateFormat("hhmm");
+        String getDate = sdf.format(date);
+        String getTime = sdfh.format(date);
+
         String service_key = "hr23IstJO5YHz0t55U3QL7JAB8OfUmvWdz9PdDZxe7dUKnbdTGcK1RhBgrh8b5QV3LqYMRMYFMD3IkKvnwjFcg%3D%3D";
-        String num_of_rosws = "10";
+        String num_of_rosws = "100";
         String page_no = "1";
         String data_type = "JSON";
-        String base_date = "20211108";
-        String base_time = "0600";
+        String base_date = getDate;
+        String base_time = getTime;
         String nx = "55";
-
         String ny = "127";
 
         String url = "http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getUltraSrtFcst?" +
@@ -86,10 +77,49 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(String s){
             super.onPostExecute(s);
-
-            tv_outPut.setText(s);
+            JSONObject mainObject = null;
+            try {
+                mainObject = new JSONObject(s);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            JSONArray itemArray = null;
+            try {
+                itemArray = mainObject.getJSONObject("response").getJSONObject("body").getJSONObject("items").getJSONArray("item");
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            for(int i=0; i<itemArray.length(); i++) {
+                JSONObject item = null;
+                try {
+                    item = itemArray.getJSONObject(i);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                String fcstTime = null;
+                try {
+                    fcstTime = item.getString("fcstTime");
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                String category = null;
+                try {
+                    category = item.getString("category");
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                String value = null;
+                try {
+                    value = item.getString("fcstValue");
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                if (category.equals("T1H")) {
+                    tv_outPut.append(fcstTime + " " + category + "  " + value + "\n"); }
+            }
             Log.d("onPostEx", "출력값 : " + s);
         }
     }
+
 }
 
